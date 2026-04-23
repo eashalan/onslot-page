@@ -857,53 +857,62 @@
     let CARD = null;       // بيانات العميل الحقيقية (إن وجدت)
     let MAP_URL = null;    // رابط الخرائط الفعلي
 
-    // عند فتح الصفحة: استبدل بيانات العينة بقيم URL إن وجدت
-    function applyURLParams() {
-      // المسار الجديد: ?d=<base64-json>
-      CARD = decodeCardData();
-
-      if (CARD) {
-        // الاسم
-        const titleEl = document.querySelector('h1[data-t="customer-name"]');
+    // يطبّق بيانات العميل من CARD على عناصر DOM (يستدعى أيضاً بعد كل تغيير لغة)
+    function applyCardToDOM() {
+      if (!CARD) return;
+      // الاسم
+      const titleEl = document.querySelector('h1[data-t="customer-name"]');
+      if (titleEl) {
         titleEl.textContent = CARD.name || CARD.code || 'العميل';
-
-        // المعلومات الفرعية: الحي + المدينة
-        const meta = document.querySelector('[data-t="customer-meta"]');
+        titleEl.dataset.userData = '1';
+      }
+      // المعلومات الفرعية
+      const meta = document.querySelector('[data-t="customer-meta"]');
+      if (meta) {
         const metaParts = [];
         if (CARD.district) metaParts.push(CARD.district);
         if (CARD.city) metaParts.push(CARD.city);
         meta.textContent = metaParts.join(' • ') || CARD.code;
+        meta.dataset.userData = '1';
+      }
+      // badge الكود القصير
+      const badge = document.querySelector('[data-t="courier-badge"]');
+      if (badge && CARD.code) {
+        badge.textContent = '🏷️ ' + CARD.code;
+        badge.dataset.userData = '1';
+      }
+      // الخريطة
+      if (CARD.lat && CARD.lng) {
+        MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
+      } else if (CARD.code) {
+        MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
+      }
+      if (MAP_URL) {
+        const mapLink = document.querySelector('a[href*="maps"]');
+        if (mapLink) mapLink.href = MAP_URL;
+      }
+      // الملاحظات
+      const notesEl = document.querySelector('[data-t="notes"]');
+      if (notesEl && CARD.notes) {
+        notesEl.textContent = '📝 ' + CARD.notes;
+        notesEl.dataset.userData = '1';
+      }
+    }
 
-        // الكود القصير في الـ badge
-        const badge = document.querySelector('[data-t="courier-badge"]');
-        if (badge && CARD.code) {
-          badge.textContent = '🏷️ ' + CARD.code;
-        }
+    // عند فتح الصفحة: استبدل بيانات العينة بقيم URL إن وجدت
+    function applyURLParams() {
+      CARD = decodeCardData();
 
-        // العنوان التفصيلي في رابط "افتح الخرائط"
-        if (CARD.lat && CARD.lng) {
-          MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
-        } else if (CARD.code) {
-          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
-        }
-        if (MAP_URL) {
-          const mapLink = document.querySelector('a[href*="maps"]');
-          if (mapLink) mapLink.href = MAP_URL;
-        }
-
-        // الملاحظات
-        const notesEl = document.querySelector('[data-t="notes"]');
-        if (notesEl && CARD.notes) {
-          notesEl.textContent = '📝 ' + CARD.notes;
-        }
-
-        // أوقات العميل المفضلة → علّم النوافذ المناسبة بنجمة
+      if (CARD) {
+        applyCardToDOM();
+        // أوقات العميل المفضلة → علّم النوافذ المناسبة بنجمة (مرة واحدة فقط)
         if (Array.isArray(CARD.preferredSlots) && CARD.preferredSlots.length) {
           CARD.preferredSlots.forEach(slot => {
             const btn = document.querySelector(`.slot[data-slot="${slot}"]`);
-            if (btn) {
+            if (btn && !btn.querySelector('.star-pref')) {
               const star = document.createElement('span');
               star.textContent = ' ⭐';
+              star.className = 'star-pref';
               star.style.marginInlineStart = 'auto';
               star.style.fontSize = '12px';
               star.title = 'الوقت المفضّل للعميل';
@@ -962,6 +971,8 @@
 
       document.querySelectorAll('[data-t]').forEach(el => {
         const key = el.getAttribute('data-t');
+        // لا نكتب فوق العناصر التي حُقنت بقيم العميل من URL
+        if (el.dataset.userData === '1') return;
         if (T[lang] && T[lang][key]) el.textContent = T[lang][key];
       });
 
@@ -970,6 +981,9 @@
       });
 
       try { localStorage.setItem('onslot-lang', lang); } catch(e) {}
+
+      // إذا كانت هناك بيانات عميل من URL، أعد تطبيقها (وستُحدّث النص بـ data-user-data)
+      if (CARD) applyCardToDOM();
     }
 
     function setLang(lang) {
