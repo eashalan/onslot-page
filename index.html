@@ -913,12 +913,42 @@
       return range;
     }
 
+    /// نص توضيحي قصير قبل الأزرار — يبيّن أن النوافذ "هذه اللحظة"
+    function slotsContextNote() {
+      const now = new Date();
+      const h = now.getHours();
+      const T = {
+        ar: h >= 21
+          ? '🌙 الوقت متأخر — تظهر خيارات بكرة فقط'
+          : '⏰ الخيارات محسوبة من الآن. لو فتحت الصفحة لاحقاً، تتغيّر بناءً على وقتك.',
+        en: h >= 21
+          ? '🌙 It\'s late — only tomorrow windows are shown'
+          : '⏰ Windows calculated from now. If you reopen later, they\'ll update based on your time.',
+        ur: h >= 21
+          ? '🌙 رات ہو گئی — صرف کل کے اوقات دکھ رہے ہیں'
+          : '⏰ یہ اوقات ابھی سے شمار کیے گئے ہیں۔ بعد میں کھولا تو بدل جائیں گے۔',
+        bn: h >= 21
+          ? '🌙 অনেক রাত — শুধু কালকের সময় দেখানো হচ্ছে'
+          : '⏰ এই সময়গুলি এখন থেকে গণনা করা। পরে খুললে পরিবর্তন হবে।',
+        hi: h >= 21
+          ? '🌙 देर हो गई — केवल कल के समय दिख रहे हैं'
+          : '⏰ ये समय अभी से गिने गए। बाद में खोलने पर बदल जाएंगे।'
+      };
+      return T[currentLang] || T.en;
+    }
+
     /// إعادة تركيب أزرار النوافذ
     function renderSlots() {
       const container = document.getElementById('slots-container');
       if (!container) return;
       const slots = generateSlots(new Date());
       container.innerHTML = '';
+
+      // أضف ملاحظة سياقية أعلى الخيارات
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:12px;color:var(--muted);margin-bottom:10px;padding:0 4px;';
+      note.textContent = slotsContextNote();
+      container.appendChild(note);
       slots.forEach(s => {
         const btn = document.createElement('button');
         btn.className = 'slot';
@@ -1119,26 +1149,35 @@
         badge.dataset.userData = '1';
       }
       // الخريطة — أولوية:
-      //   ١. lat/lng حقيقية (من تثبيت موقع العميل) → نقطة دقيقة
-      //   ٢. عنوان نصي (شارع + حي + مدينة) → بحث قوقل النصي
-      //   ٣. الكود القصير وحده → بحث بالكود (تقريبي جداً، آخر ملاذ)
+      //   ١. lat/lng حقيقية (من تثبيت موقع العميل) → نقطة دقيقة عبر geo:
+      //   ٢. عنوان نصي بالإنجليزية (Google يفهمه أفضل من العربي)
+      //   ٣. عنوان عربي
+      //   ٤. الكود القصير (آخر ملاذ)
       if (CARD.lat && CARD.lng) {
-        MAP_URL = `https://www.google.com/maps/search/?api=1&query=${CARD.lat},${CARD.lng}`;
+        // صيغة مباشرة لـGoogle Maps — أكثر موثوقية من /maps/search?api=1
+        MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
       } else {
-        const addrParts = [];
-        if (CARD.streetAr) addrParts.push(CARD.streetAr);
-        else if (CARD.streetEn) addrParts.push(CARD.streetEn);
-        if (CARD.building) addrParts.push(CARD.building);
-        if (CARD.districtAr) addrParts.push(CARD.districtAr);
-        else if (CARD.districtEn) addrParts.push(CARD.districtEn);
-        if (CARD.cityAr) addrParts.push(CARD.cityAr);
-        else if (CARD.cityEn) addrParts.push(CARD.cityEn);
+        // فضّل النص الإنجليزي لأن Google Geocoding أفضل معه عالمياً
+        const en = [];
+        if (CARD.building) en.push(CARD.building);
+        if (CARD.streetEn) en.push(CARD.streetEn);
+        if (CARD.districtEn) en.push(CARD.districtEn);
+        if (CARD.cityEn) en.push(CARD.cityEn);
 
-        if (addrParts.length >= 2) {
-          const q = addrParts.join('، ') + '، السعودية';
-          MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+        const ar = [];
+        if (CARD.building) ar.push(CARD.building);
+        if (CARD.streetAr) ar.push(CARD.streetAr);
+        if (CARD.districtAr) ar.push(CARD.districtAr);
+        if (CARD.cityAr) ar.push(CARD.cityAr);
+
+        if (en.length >= 2) {
+          const q = en.join(', ') + ', Saudi Arabia';
+          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(q)}`;
+        } else if (ar.length >= 2) {
+          const q = ar.join('، ') + '، السعودية';
+          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(q)}`;
         } else if (CARD.code) {
-          MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
+          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
         }
       }
       if (MAP_URL) {
