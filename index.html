@@ -503,24 +503,8 @@
       <span data-t="commit-notice">اختيارك = التزام. العميل يضمن جاهزيته، وأنت تضمن وصولك داخل النافذة فقط. الالتزام يظهر في تقييمك العام.</span>
     </div>
 
-    <div class="slots">
-      <button class="slot" data-slot="now">
-        <span class="icon">⚡</span>
-        <span data-t="slot-now">الحين (خلال ساعة)</span>
-      </button>
-      <button class="slot" data-slot="afternoon">
-        <span class="icon">🕐</span>
-        <span data-t="slot-afternoon">بعد الظهر (١–٣)</span>
-      </button>
-      <button class="slot" data-slot="evening">
-        <span class="icon">🌆</span>
-        <span data-t="slot-evening">المساء (٦–٩)</span>
-      </button>
-      <button class="slot" data-slot="tomorrow">
-        <span class="icon">📅</span>
-        <span data-t="slot-tomorrow">بكرة</span>
-      </button>
-    </div>
+    <!-- النوافذ تُولّد ديناميكياً من JS بناءً على الوقت الحالي -->
+    <div class="slots" id="slots-container"></div>
 
     <div class="divider-line"></div>
 
@@ -834,6 +818,160 @@
     let photoAttached = false;
     let customerConfirmed = false;
 
+    // ===== نوافذ زمنية ديناميكية =====
+    // تُولَّد حسب الوقت الحالي للمندوب — لا تعرض أوقات فاتت.
+
+    /// أرقام عربية-هندية للغة العربية والاردية
+    function localizeDigits(n, lang) {
+      const useArabicIndic = (lang === 'ar' || lang === 'ur');
+      if (!useArabicIndic) return String(n);
+      const map = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      return String(n).replace(/[0-9]/g, d => map[+d]);
+    }
+
+    /// تنسيق الساعة بصيغة ١٢ ساعة مع لاحقة لغوية (م/ص ، PM/AM ...)
+    function formatHour(h, lang) {
+      const period12 = h >= 12 ? 'pm' : 'am';
+      let hr12 = h % 12;
+      if (hr12 === 0) hr12 = 12;
+
+      const suffix = {
+        ar: { am: 'ص', pm: 'م' },
+        en: { am: 'AM', pm: 'PM' },
+        ur: { am: 'ص', pm: 'ش' },
+        bn: { am: 'AM', pm: 'PM' },
+        hi: { am: 'AM', pm: 'PM' }
+      }[lang] || { am: 'AM', pm: 'PM' };
+
+      return localizeDigits(hr12, lang) + ' ' + suffix[period12];
+    }
+
+    /// أيقونة مناسبة لساعة معيّنة
+    function iconFor(h) {
+      if (h >= 5 && h < 11) return '🌅';
+      if (h >= 11 && h < 14) return '🕐';
+      if (h >= 14 && h < 17) return '🌤';
+      if (h >= 17 && h < 21) return '🌆';
+      return '🌙';
+    }
+
+    /// يولّد قائمة النوافذ المناسبة من الآن
+    /// قاعدة: نافذة "الحين" + نافذتان بحجم ساعتين بعدها + بكرة
+    /// لو كنا متأخرين (>= ٢٢)، نعرض ٤ نوافذ من بكرة
+    function generateSlots(now) {
+      const h = now.getHours();
+      const list = [];
+
+      // متأخر جداً → اعرض كل خيارات بكرة
+      if (h >= 21) {
+        list.push({ key: 'tom-morning',   startH: 9,  endH: 11, icon: '🌅', isTomorrow: true });
+        list.push({ key: 'tom-noon',      startH: 13, endH: 15, icon: '🕐', isTomorrow: true });
+        list.push({ key: 'tom-afternoon', startH: 16, endH: 18, icon: '🌤', isTomorrow: true });
+        list.push({ key: 'tom-evening',   startH: 19, endH: 21, icon: '🌆', isTomorrow: true });
+        return list;
+      }
+
+      // ١. الحين (الساعة الحالية → +١)
+      const endNow = Math.min(h + 1, 22);
+      list.push({ key: 'now', startH: h, endH: endNow, icon: '⚡', isNow: true });
+
+      // ٢. نافذتان بحجم ساعتين بعد "الحين"
+      let cursor = endNow;
+      while (list.length < 3 && cursor + 2 <= 22) {
+        list.push({
+          key: `h${cursor}`,
+          startH: cursor,
+          endH: cursor + 2,
+          icon: iconFor(cursor)
+        });
+        cursor += 2;
+      }
+
+      // ٣. خيار بكرة دائماً
+      list.push({ key: 'tomorrow', icon: '📅', isTomorrow: true, allDay: true });
+      return list;
+    }
+
+    /// نص الخيار حسب اللغة
+    function slotLabel(slot, lang) {
+      // قاموس النصوص الثابتة
+      const T = {
+        ar: { now: 'الحين',   tomorrow: 'بكرة', tomLabel: 'بكرة' },
+        en: { now: 'Now',     tomorrow: 'Tomorrow', tomLabel: 'Tomorrow' },
+        ur: { now: 'ابھی',    tomorrow: 'کل', tomLabel: 'کل' },
+        bn: { now: 'এখন',     tomorrow: 'কাল', tomLabel: 'Tomorrow' },
+        hi: { now: 'अभी',      tomorrow: 'कल', tomLabel: 'Tomorrow' }
+      }[lang] || {};
+
+      if (slot.allDay) return T.tomorrow || 'Tomorrow';
+
+      const range = formatHour(slot.startH, lang) + ' – ' + formatHour(slot.endH, lang);
+      const tomPrefix = (T.tomLabel || 'Tomorrow') + ': ';
+
+      if (slot.isNow) return (T.now || 'Now') + ' (' + range + ')';
+      if (slot.isTomorrow) return tomPrefix + range;
+      return range;
+    }
+
+    /// إعادة تركيب أزرار النوافذ
+    function renderSlots() {
+      const container = document.getElementById('slots-container');
+      if (!container) return;
+      const slots = generateSlots(new Date());
+      container.innerHTML = '';
+      slots.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'slot';
+        btn.dataset.slot = s.key;
+        btn.dataset.label = slotLabel(s, currentLang);
+        btn.innerHTML = `
+          <span class="icon">${s.icon}</span>
+          <span class="slot-label">${slotLabel(s, currentLang)}</span>
+        `;
+        btn.addEventListener('click', () => onSlotPicked(s, btn));
+        container.appendChild(btn);
+      });
+
+      // ضع نجوم على الأوقات المفضّلة لو CARD معروف
+      if (CARD && Array.isArray(CARD.preferredSlots) && CARD.preferredSlots.length) {
+        container.querySelectorAll('.slot').forEach(btn => {
+          const startH = parseInt(btn.dataset.slot.replace(/[^0-9]/g, ''), 10);
+          if (matchesPreference(btn.dataset.slot, startH, CARD.preferredSlots)) {
+            const star = document.createElement('span');
+            star.textContent = '⭐';
+            star.style.marginInlineStart = 'auto';
+            star.style.fontSize = '13px';
+            btn.appendChild(star);
+          }
+        });
+      }
+    }
+
+    /// هل النافذة تتطابق مع تفضيل عام للعميل (afternoon/evening/now/tomorrow)؟
+    function matchesPreference(key, startH, prefs) {
+      if (key === 'now' && prefs.includes('now')) return true;
+      if (key === 'tomorrow' && prefs.includes('tomorrow')) return true;
+      if (key.startsWith('tom-')) return prefs.includes('tomorrow');
+      if (isNaN(startH)) return false;
+      if (prefs.includes('afternoon') && startH >= 12 && startH < 17) return true;
+      if (prefs.includes('evening') && startH >= 17 && startH < 22) return true;
+      return false;
+    }
+
+    function onSlotPicked(slot, btn) {
+      document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      const shipmentId = new URLSearchParams(location.search).get('id') || 'demo';
+      fetch('/api/select-slot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot: slot.key, startH: slot.startH, endH: slot.endH, shipmentId })
+      }).catch(() => {});
+
+      setTimeout(() => showSuccess(btn.dataset.label), 300);
+    }
+
     // ===== URL params =====
     function urlParam(name) {
       return new URLSearchParams(location.search).get(name);
@@ -1032,6 +1170,8 @@
 
       // إذا كانت هناك بيانات عميل من URL، أعد تطبيقها (وستُحدّث النص بـ data-user-data)
       if (CARD) applyCardToDOM();
+      // إعادة بناء النوافذ بنصوص اللغة الجديدة
+      renderSlots();
     }
 
     function setLang(lang) {
@@ -1053,27 +1193,10 @@
     // طبّق بيانات العميل من URL ثم اعرض اختيار اللغة (أو طبّق المحفوظ)
     applyURLParams();
     maybeShowLangPicker();
+    // أول رندر للنوافذ
+    renderSlots();
 
-    // Slot selection
-    document.querySelectorAll('.slot').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const slot = btn.dataset.slot;
-        const labelEl = btn.querySelector('[data-t]');
-        const timeText = labelEl ? labelEl.textContent : slot;
-
-        document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-        btn.classList.add('selected');
-
-        const shipmentId = new URLSearchParams(location.search).get('id') || 'demo';
-        fetch('/api/select-slot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slot, shipmentId })
-        }).catch(() => {});
-
-        setTimeout(() => showSuccess(timeText), 300);
-      });
-    });
+    // (الأزرار تُربط داخل renderSlots())
 
     function t(key) {
       return (T[currentLang] && T[currentLang][key]) || key;
