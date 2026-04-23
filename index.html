@@ -838,14 +838,88 @@
       return new URLSearchParams(location.search).get(name);
     }
 
+    // فك تشفير base64 URL-safe → JSON
+    function decodeCardData() {
+      const b64 = urlParam('d');
+      if (!b64) return null;
+      try {
+        // أعد رموز base64 الأصلية + padding
+        let s = b64.replace(/-/g, '+').replace(/_/g, '/');
+        while (s.length % 4) s += '=';
+        const json = decodeURIComponent(escape(atob(s)));
+        return JSON.parse(json);
+      } catch (e) {
+        console.warn('decode failed', e);
+        return null;
+      }
+    }
+
+    let CARD = null;       // بيانات العميل الحقيقية (إن وجدت)
+    let MAP_URL = null;    // رابط الخرائط الفعلي
+
     // عند فتح الصفحة: استبدل بيانات العينة بقيم URL إن وجدت
     function applyURLParams() {
-      const id      = urlParam('id');      // RAFA2962
-      const name    = urlParam('name');    // اسم العميل
-      const carrier = urlParam('carrier'); // أرامكس / SMSA ...
+      // المسار الجديد: ?d=<base64-json>
+      CARD = decodeCardData();
+
+      if (CARD) {
+        // الاسم
+        const titleEl = document.querySelector('h1[data-t="customer-name"]');
+        titleEl.textContent = CARD.name || CARD.code || 'العميل';
+
+        // المعلومات الفرعية: الحي + المدينة
+        const meta = document.querySelector('[data-t="customer-meta"]');
+        const metaParts = [];
+        if (CARD.district) metaParts.push(CARD.district);
+        if (CARD.city) metaParts.push(CARD.city);
+        meta.textContent = metaParts.join(' • ') || CARD.code;
+
+        // الكود القصير في الـ badge
+        const badge = document.querySelector('[data-t="courier-badge"]');
+        if (badge && CARD.code) {
+          badge.textContent = '🏷️ ' + CARD.code;
+        }
+
+        // العنوان التفصيلي في رابط "افتح الخرائط"
+        if (CARD.lat && CARD.lng) {
+          MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
+        } else if (CARD.code) {
+          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
+        }
+        if (MAP_URL) {
+          const mapLink = document.querySelector('a[href*="maps"]');
+          if (mapLink) mapLink.href = MAP_URL;
+        }
+
+        // الملاحظات
+        const notesEl = document.querySelector('[data-t="notes"]');
+        if (notesEl && CARD.notes) {
+          notesEl.textContent = '📝 ' + CARD.notes;
+        }
+
+        // أوقات العميل المفضلة → علّم النوافذ المناسبة بنجمة
+        if (Array.isArray(CARD.preferredSlots) && CARD.preferredSlots.length) {
+          CARD.preferredSlots.forEach(slot => {
+            const btn = document.querySelector(`.slot[data-slot="${slot}"]`);
+            if (btn) {
+              const star = document.createElement('span');
+              star.textContent = ' ⭐';
+              star.style.marginInlineStart = 'auto';
+              star.style.fontSize = '12px';
+              star.title = 'الوقت المفضّل للعميل';
+              btn.appendChild(star);
+            }
+          });
+        }
+        return;
+      }
+
+      // المسار القديم (متوافق): ?id=&name=&district=
+      const id      = urlParam('id');
+      const name    = urlParam('name');
+      const carrier = urlParam('carrier');
       const dist    = urlParam('district');
 
-      // إذا أعطانا العميل اسمه، نعرضه؛ وإلا نعرض الكود القصير كهوية
       const titleEl = document.querySelector('h1[data-t="customer-name"]');
       if (name) titleEl.textContent = decodeURIComponent(name);
       else if (id) titleEl.textContent = id;
