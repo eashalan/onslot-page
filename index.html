@@ -858,25 +858,32 @@
     let CARD = null;       // بيانات العميل الحقيقية (إن وجدت)
     let MAP_URL = null;    // رابط الخرائط الفعلي
 
+    // يختار النص حسب اللغة الحالية: AR/UR يستخدمان النسخة العربية، الباقي الإنجليزية
+    function pickByLang(arVal, enVal) {
+      const useArabic = (currentLang === 'ar' || currentLang === 'ur');
+      const v = useArabic ? (arVal || enVal) : (enVal || arVal);
+      return v || '';
+    }
+
     // يطبّق بيانات العميل من CARD على عناصر DOM (يستدعى أيضاً بعد كل تغيير لغة)
     function applyCardToDOM() {
       if (!CARD) return;
-      // الاسم
+      // الاسم — كما هو (ما يُترجم)
       const titleEl = document.querySelector('h1[data-t="customer-name"]');
       if (titleEl) {
-        titleEl.textContent = CARD.name || CARD.code || 'العميل';
+        titleEl.textContent = CARD.name || CARD.code || 'Customer';
         titleEl.dataset.userData = '1';
       }
-      // المعلومات الفرعية
+      // المدينة + الحي — يختار النسخة الصحيحة حسب اللغة
       const meta = document.querySelector('[data-t="customer-meta"]');
       if (meta) {
-        const metaParts = [];
-        if (CARD.district) metaParts.push(CARD.district);
-        if (CARD.city) metaParts.push(CARD.city);
-        meta.textContent = metaParts.join(' • ') || CARD.code;
+        const district = pickByLang(CARD.districtAr, CARD.districtEn);
+        const city     = pickByLang(CARD.cityAr,     CARD.cityEn);
+        const parts = [district, city].filter(Boolean);
+        meta.textContent = parts.join(' • ') || CARD.code;
         meta.dataset.userData = '1';
       }
-      // badge الكود القصير
+      // badge الكود القصير (لاتيني)
       const badge = document.querySelector('[data-t="courier-badge"]');
       if (badge && CARD.code) {
         badge.textContent = '🏷️ ' + CARD.code;
@@ -892,7 +899,7 @@
         const mapLink = document.querySelector('a[href*="maps"]');
         if (mapLink) mapLink.href = MAP_URL;
       }
-      // الملاحظات
+      // الملاحظات — تبقى بلغة العميل (ما نقدر نترجم نص حر)
       const notesEl = document.querySelector('[data-t="notes"]');
       if (notesEl && CARD.notes) {
         notesEl.textContent = '📝 ' + CARD.notes;
