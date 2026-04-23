@@ -480,6 +480,7 @@
     <div class="brand">
       <span class="logo-dot"></span>
       <span>onslot</span>
+      <span id="data-status" style="margin-inline-start:auto; font-size:10px; padding:2px 8px; border-radius:999px;"></span>
     </div>
 
     <header class="header">
@@ -902,6 +903,20 @@
     // عند فتح الصفحة: استبدل بيانات العينة بقيم URL إن وجدت
     function applyURLParams() {
       CARD = decodeCardData();
+
+      // مؤشر بصري واضح: هل وصلت بيانات حقيقية أم نموذج عينة؟
+      const status = document.getElementById('data-status');
+      if (status) {
+        if (CARD) {
+          status.textContent = '✓ بيانات حقيقية';
+          status.style.background = '#F0FDF4';
+          status.style.color = '#085d44';
+        } else {
+          status.textContent = '⚠ بيانات عينة';
+          status.style.background = '#FEF3C7';
+          status.style.color = '#B45309';
+        }
+      }
 
       if (CARD) {
         applyCardToDOM();
