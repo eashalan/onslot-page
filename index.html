@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A7D5C" />
+  <title>onslot — Delivery</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A7D5C'/%3E%3Crect x='6' y='13' width='20' height='6' rx='3' fill='white'/%3E%3C/svg%3E" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Beiruti:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --primary: #0A7D5C;
+      --primary-soft: #F0FDF4;
+      --primary-dark: #085d44;
+      --accent: #F5A524;
+      --ink: #0F172A;
+      --muted: #64748B;
+      --surface: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --warn-soft: #FEF3C7;
+      --warn: #B45309;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    html[lang="ar"] body { font-family: 'Beiruti', sans-serif; }
+    html[lang="en"] body { font-family: 'Inter', sans-serif; }
+    html[lang="ur"] body { font-family: 'Noto Nastaliq Urdu', 'Beiruti', sans-serif; }
+    html[lang="bn"] body { font-family: 'Noto Sans Bengali', 'Inter', sans-serif; }
+    html[lang="hi"] body { font-family: 'Noto Sans Devanagari', 'Inter', sans-serif; }
+
+    body {
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 16px;
+      padding-top: max(60px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Language switcher */
+    .lang-switch {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      color: var(--ink);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    html[dir="ltr"] .lang-switch { right: auto; left: 12px; }
+
+    .lang-menu {
+      position: fixed;
+      top: max(56px, calc(env(safe-area-inset-top) + 44px));
+      right: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      z-index: 11;
+      min-width: 160px;
+      display: none;
+    }
+    .lang-menu.open { display: block; }
+    html[dir="ltr"] .lang-menu { right: auto; left: 12px; }
+
+    .lang-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .lang-option:hover { background: var(--primary-soft); }
+    .lang-option.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+    .lang-flag { font-size: 18px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06),
+                  0 1px 3px rgba(15, 23, 42, 0.04);
+      width: 100%;
+      max-width: 460px;
+      overflow: hidden;
+      animation: appear 0.4s ease;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 24px 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .logo-dot {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      background: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-dot::after {
+      content: '';
+      width: 12px; height: 4px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    .header { padding: 12px 24px 20px; }
+    .header .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .header .meta {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Courier badge */
+    .courier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .divider-line {
+      height: 1px;
+      background: var(--border);
+      margin: 0 24px;
+    }
+
+    .section-title {
+      padding: 20px 24px 6px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-sub {
+      padding: 0 24px 12px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Commitment notice */
+    .commit-notice {
+      margin: 0 24px 12px;
+      padding: 12px 14px;
+      background: var(--warn-soft);
+      border-radius: 10px;
+      font-size: 12.5px;
+      color: var(--warn);
+      line-height: 1.5;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .commit-notice .icon { flex-shrink: 0; }
+
+    .slots {
+      padding: 0 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .slot {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: inherit;
+      width: 100%;
+      text-align: inherit;
+    }
+    .slot:hover { border-color: var(--primary); background: var(--primary-soft); }
+    .slot:active { transform: scale(0.98); }
+    .slot .icon { font-size: 22px; line-height: 1; width: 28px; text-align: center; }
+    .slot.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+    .links {
+      padding: 8px 24px 4px;
+      display: flex;
+      flex-direction: column;
+    }
+    .link {
+      padding: 14px 4px;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .link:last-child { border-bottom: none; }
+    .link:hover { color: var(--primary); }
+    .link .left { display: flex; align-items: center; gap: 12px; }
+    .link .chev { color: var(--muted); font-size: 18px; }
+
+    /* Action row */
+    .actions {
+      padding: 16px 24px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 1.5px solid transparent;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--card); color: var(--primary); border-color: var(--primary); }
+    .btn-secondary:hover { background: var(--primary-soft); }
+    .btn-full { grid-column: 1 / -1; padding: 16px; font-size: 16px; }
+
+    /* Success / states */
+    .success {
+      text-align: center;
+      padding: 60px 24px;
+      animation: appear 0.4s ease;
+    }
+    .success .check {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+    .success h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .success p { color: var(--muted); font-size: 15px; line-height: 1.55; }
+    .success .time-box {
+      display: inline-block;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin: 16px 0;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 20px;
+      opacity: 0.7;
+    }
+
+    /* Proof modal */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 16px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border-radius: 20px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      animation: appear 0.25s ease;
+    }
+    .modal h3 { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+    .modal p { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+    .modal-step {
+      display: flex; gap: 12px; padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    .modal-step.done { border-color: var(--primary); background: var(--primary-soft); }
+    .modal-step .num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-step.done .num { background: var(--primary); color: white; }
+    .modal-step .title { font-weight: 600; margin-bottom: 2px; }
+    .modal-step .sub { font-size: 12.5px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- Language switcher -->
+  <button class="lang-switch" onclick="toggleLangMenu(event)">
+    <span id="cur-flag">🇸🇦</span>
+    <span id="cur-name">العربية</span>
+    <span style="font-size: 10px; opacity: 0.6;">▼</span>
+  </button>
+  <div class="lang-menu" id="lang-menu">
+    <div class="lang-option active" data-lang="ar" onclick="setLang('ar')">
+      <span class="lang-flag">🇸🇦</span><span>العربية</span>
+    </div>
+    <div class="lang-option" data-lang="en" onclick="setLang('en')">
+      <span class="lang-flag">🇬🇧</span><span>English</span>
+    </div>
+    <div class="lang-option" data-lang="ur" onclick="setLang('ur')">
+      <span class="lang-flag">🇵🇰</span><span>اردو</span>
+    </div>
+    <div class="lang-option" data-lang="bn" onclick="setLang('bn')">
+      <span class="lang-flag">🇧🇩</span><span>বাংলা</span>
+    </div>
+    <div class="lang-option" data-lang="hi" onclick="setLang('hi')">
+      <span class="lang-flag">🇮🇳</span><span>हिन्दी</span>
+    </div>
+  </div>
+
+  <main class="card" id="card">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <span>onslot</span>
+    </div>
+
+    <header class="header">
+      <div class="label" data-t="delivery-label">📦 شحنة للتسليم</div>
+      <h1 data-t="customer-name">أحمد العبدالله</h1>
+      <div class="meta" data-t="customer-meta">أرامكس • حي الملقا، الرياض</div>
+      <div class="courier-badge" data-t="courier-badge">⭐ ٤.٨ · ملتزم بالمواعيد</div>
+    </header>
+
+    <div class="divider-line"></div>
+
+    <!-- Section: time window -->
+    <div class="section-title">
+      <span>🕐</span><span data-t="window-title">اختر نافذتك الزمنية</span>
+    </div>
+    <div class="section-sub" data-t="window-sub">اختر الوقت الأنسب لمسارك. النافذة تصير عقد التزام متبادل.</div>
+
+    <div class="commit-notice">
+      <span class="icon">⚠️</span>
+      <span data-t="commit-notice">اختيارك = التزام. العميل يضمن جاهزيته، وأنت تضمن وصولك داخل النافذة فقط. الالتزام يظهر في تقييمك العام.</span>
+    </div>
+
+    <div class="slots">
+      <button class="slot" data-slot="now">
+        <span class="icon">⚡</span>
+        <span data-t="slot-now">الحين (خلال ساعة)</span>
+      </button>
+      <button class="slot" data-slot="afternoon">
+        <span class="icon">🕐</span>
+        <span data-t="slot-afternoon">بعد الظهر (١–٣)</span>
+      </button>
+      <button class="slot" data-slot="evening">
+        <span class="icon">🌆</span>
+        <span data-t="slot-evening">المساء (٦–٩)</span>
+      </button>
+      <button class="slot" data-slot="tomorrow">
+        <span class="icon">📅</span>
+        <span data-t="slot-tomorrow">بكرة</span>
+      </button>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Section: location -->
+    <div class="section-title">
+      <span>📍</span><span data-t="loc-title">الموقع والعنوان</span>
+    </div>
+    <div class="links">
+      <a class="link" href="https://maps.google.com/?q=24.7136,46.6753" target="_blank">
+        <span class="left"><span>🗺️</span><span data-t="open-map">افتح في الخرائط</span></span>
+        <span class="chev">›</span>
+      </a>
+      <a class="link" href="#photo" onclick="showPhoto(event)">
+        <span class="left"><span>📸</span><span data-t="entrance-photo">صورة المدخل</span></span>
+        <span class="chev">›</span>
+      </a>
+      <div class="link" style="cursor:default;">
+        <span class="left"><span>📝</span><span data-t="notes">ملاحظات: اتصل بالحارس</span></span>
+      </div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Section: delivery actions -->
+    <div class="section-title">
+      <span>🚚</span><span data-t="actions-title">إجراءات التسليم</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary btn-full" onclick="requestCode()">
+        <span>🔐</span>
+        <span data-t="request-code">اطلب رمز الاستلام من العميل</span>
+      </button>
+      <button class="btn btn-secondary" onclick="onWay()">
+        <span>🚗</span>
+        <span data-t="on-way">في الطريق</span>
+      </button>
+      <button class="btn btn-primary" onclick="openProof()">
+        <span>✅</span>
+        <span data-t="proof">إقرار التسليم</span>
+      </button>
+    </div>
+
+    <div class="footer-note" data-t="powered">عبر onslot — للتنسيق مع العميل بدون مكالمات إضافية</div>
+    <div style="height: 16px;"></div>
+  </main>
+
+  <!-- Proof of Delivery Modal -->
+  <div class="modal-bg" id="proof-modal">
+    <div class="modal">
+      <h3 data-t="proof-title">إقرار التسليم</h3>
+      <p data-t="proof-sub">خطوتان تحميك وتحمي العميل من أي نزاع لاحق.</p>
+
+      <div class="modal-step" id="step-1">
+        <div class="num">١</div>
+        <div>
+          <div class="title" data-t="proof-step1">صورة تثبت التسليم</div>
+          <div class="sub" data-t="proof-step1-sub">صورة للطرد عند الباب أو مع المستلم</div>
+          <button class="btn btn-primary" style="margin-top:10px; font-size:13px; padding: 10px 14px;" onclick="attachPhoto()">
+            <span>📸</span>
+            <span data-t="take-photo">التقط صورة</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-step" id="step-2">
+        <div class="num">٢</div>
+        <div>
+          <div class="title" data-t="proof-step2">تأكيد العميل</div>
+          <div class="sub" data-t="proof-step2-sub">نرسل إشعاراً للعميل ليضغط «استلمت» في تطبيقه</div>
+          <button class="btn btn-primary" style="margin-top:10px; font-size:13px; padding: 10px 14px;" id="btn-confirm" onclick="sendConfirm()" disabled>
+            <span>🔔</span>
+            <span data-t="send-confirm">إرسال طلب التأكيد</span>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" style="margin-top: 14px;" id="btn-finish" onclick="finishDelivery()" disabled>
+        <span data-t="finish-delivery">إنهاء التوصيل ✓</span>
+      </button>
+      <button class="btn btn-secondary btn-full" style="margin-top: 8px; border:none; background:transparent;" onclick="closeProof()">
+        <span data-t="cancel">إلغاء</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // === Translations ===
+    const T = {
+      ar: {
+        'delivery-label': '📦 شحنة للتسليم',
+        'customer-name': 'أحمد العبدالله',
+        'customer-meta': 'أرامكس • حي الملقا، الرياض',
+        'courier-badge': '⭐ ٤.٨ · ملتزم بالمواعيد',
+        'window-title': 'اختر نافذتك الزمنية',
+        'window-sub': 'اختر الوقت الأنسب لمسارك. النافذة تصير عقد التزام متبادل.',
+        'commit-notice': 'اختيارك = التزام. العميل يضمن جاهزيته، وأنت تضمن وصولك داخل النافذة فقط. الالتزام يظهر في تقييمك العام.',
+        'slot-now': 'الحين (خلال ساعة)',
+        'slot-afternoon': 'بعد الظهر (١–٣)',
+        'slot-evening': 'المساء (٦–٩)',
+        'slot-tomorrow': 'بكرة',
+        'loc-title': 'الموقع والعنوان',
+        'open-map': 'افتح في الخرائط',
+        'entrance-photo': 'صورة المدخل',
+        'notes': 'ملاحظات: اتصل بالحارس',
+        'actions-title': 'إجراءات التسليم',
+        'request-code': 'اطلب رمز الاستلام من العميل',
+        'on-way': 'في الطريق',
+        'proof': 'إقرار التسليم',
+        'powered': 'عبر onslot — للتنسيق مع العميل بدون مكالمات إضافية',
+        'success-title': 'تمام! سجّلنا وقتك',
+        'success-msg': 'أحمد راح يكون جاهز في هذي النافذة فقط.',
+        'code-sent': 'طلب الرمز أُرسل للعميل',
+        'code-sent-msg': 'بيوصل لك الرمز من العميل خلال دقائق',
+        'on-way-sent': 'تم التنبيه',
+        'on-way-msg': 'أحمد يستعد لاستلامك',
+        'proof-title': 'إقرار التسليم',
+        'proof-sub': 'خطوتان تحميك وتحمي العميل من أي نزاع لاحق.',
+        'proof-step1': 'صورة تثبت التسليم',
+        'proof-step1-sub': 'صورة للطرد عند الباب أو مع المستلم',
+        'take-photo': 'التقط صورة',
+        'photo-attached': 'تم إرفاق الصورة',
+        'proof-step2': 'تأكيد العميل',
+        'proof-step2-sub': 'نرسل إشعاراً للعميل ليضغط «استلمت» في تطبيقه',
+        'send-confirm': 'إرسال طلب التأكيد',
+        'confirm-sent': 'أكّد العميل الاستلام',
+        'finish-delivery': 'إنهاء التوصيل ✓',
+        'cancel': 'إلغاء',
+        'done-title': 'تم التسليم',
+        'done-msg': 'موثّق. شكراً لالتزامك 🙏'
+      },
+      en: {
+        'delivery-label': '📦 Delivery',
+        'customer-name': 'Ahmed Alabdullah',
+        'customer-meta': 'Aramex • Al Malqa, Riyadh',
+        'courier-badge': '⭐ 4.8 · On-time champion',
+        'window-title': 'Pick your time window',
+        'window-sub': 'Choose what fits your route. This becomes a mutual commitment.',
+        'commit-notice': 'Your choice = a commitment. The customer guarantees readiness, you guarantee arrival within the window only. Shows in your public rating.',
+        'slot-now': 'Now (within an hour)',
+        'slot-afternoon': 'Afternoon (1–3 PM)',
+        'slot-evening': 'Evening (6–9 PM)',
+        'slot-tomorrow': 'Tomorrow',
+        'loc-title': 'Location & Address',
+        'open-map': 'Open in Maps',
+        'entrance-photo': 'Entrance photo',
+        'notes': 'Notes: call the guard',
+        'actions-title': 'Delivery actions',
+        'request-code': 'Request delivery code from customer',
+        'on-way': 'On the way',
+        'proof': 'Confirm delivery',
+        'powered': 'via onslot — coordinating without extra calls',
+        'success-title': 'Done! Slot locked',
+        'success-msg': 'Ahmed will be ready in this window only.',
+        'code-sent': 'Code request sent',
+        'code-sent-msg': 'The customer will send the code shortly',
+        'on-way-sent': 'Alert sent',
+        'on-way-msg': 'Ahmed is getting ready',
+        'proof-title': 'Proof of Delivery',
+        'proof-sub': 'Two steps protect both of you from any future dispute.',
+        'proof-step1': 'Proof photo',
+        'proof-step1-sub': 'Photo of package at door or with recipient',
+        'take-photo': 'Take photo',
+        'photo-attached': 'Photo attached',
+        'proof-step2': 'Customer confirms',
+        'proof-step2-sub': 'We notify the customer to tap "Received" in their app',
+        'send-confirm': 'Send confirmation request',
+        'confirm-sent': 'Customer confirmed receipt',
+        'finish-delivery': 'Finish delivery ✓',
+        'cancel': 'Cancel',
+        'done-title': 'Delivered',
+        'done-msg': 'Logged. Thanks for your commitment 🙏'
+      },
+      ur: {
+        'delivery-label': '📦 ڈیلیوری',
+        'customer-name': 'احمد العبداللہ',
+        'customer-meta': 'ارامکس • الملقا، ریاض',
+        'courier-badge': '⭐ ۴.۸ · وقت کا پابند',
+        'window-title': 'اپنی وقت کی کھڑکی منتخب کریں',
+        'window-sub': 'جو آپ کے راستے کے مطابق ہو۔ یہ ایک باہمی عہد بن جاتا ہے۔',
+        'commit-notice': 'آپ کا انتخاب = ایک عہد۔ گاہک تیاری کی ضمانت دیتا ہے، آپ صرف اس کھڑکی میں پہنچنے کی ضمانت دیتے ہیں۔ آپ کی پبلک ریٹنگ میں ظاہر ہوتا ہے۔',
+        'slot-now': 'ابھی (ایک گھنٹے میں)',
+        'slot-afternoon': 'دوپہر (۱–۳)',
+        'slot-evening': 'شام (۶–۹)',
+        'slot-tomorrow': 'کل',
+        'loc-title': 'مقام اور پتہ',
+        'open-map': 'میپس میں کھولیں',
+        'entrance-photo': 'داخلے کی تصویر',
+        'notes': 'نوٹ: گارڈ کو کال کریں',
+        'actions-title': 'ڈیلیوری کے اقدامات',
+        'request-code': 'گاہک سے ڈیلیوری کوڈ طلب کریں',
+        'on-way': 'راستے میں',
+        'proof': 'ڈیلیوری کی تصدیق',
+        'powered': 'onslot کے ذریعے — اضافی کالز کے بغیر ہم آہنگی',
+        'success-title': 'ہو گیا! وقت محفوظ',
+        'success-msg': 'احمد صرف اس کھڑکی میں تیار ہوں گے۔',
+        'code-sent': 'کوڈ کی درخواست بھیج دی',
+        'code-sent-msg': 'گاہک جلد ہی کوڈ بھیجے گا',
+        'on-way-sent': 'اطلاع بھیجی گئی',
+        'on-way-msg': 'احمد تیار ہو رہے ہیں',
+        'proof-title': 'ڈیلیوری کا ثبوت',
+        'proof-sub': 'دو قدم دونوں کو مستقبل کے کسی بھی تنازع سے بچاتے ہیں۔',
+        'proof-step1': 'ثبوت کی تصویر',
+        'proof-step1-sub': 'پیکج کی دروازے پر یا وصول کنندہ کے ساتھ تصویر',
+        'take-photo': 'تصویر لیں',
+        'photo-attached': 'تصویر منسلک کر دی',
+        'proof-step2': 'گاہک کی تصدیق',
+        'proof-step2-sub': 'ہم گاہک کو اطلاع دیتے ہیں کہ وہ "وصول ہوا" دبائیں',
+        'send-confirm': 'تصدیقی درخواست بھیجیں',
+        'confirm-sent': 'گاہک نے وصولی کی تصدیق کی',
+        'finish-delivery': 'ڈیلیوری مکمل ✓',
+        'cancel': 'منسوخ',
+        'done-title': 'ڈیلیور ہو گیا',
+        'done-msg': 'درج۔ آپ کی پابندی کا شکریہ 🙏'
+      },
+      bn: {
+        'delivery-label': '📦 ডেলিভারি',
+        'customer-name': 'আহমেদ আলআবদুল্লাহ',
+        'customer-meta': 'অ্যারামেক্স • আল মালকা, রিয়াদ',
+        'courier-badge': '⭐ ৪.৮ · সময়নিষ্ঠ',
+        'window-title': 'আপনার সময়ের জানালা বেছে নিন',
+        'window-sub': 'আপনার রুটের সাথে মানানসই একটি বেছে নিন। এটি পারস্পরিক প্রতিশ্রুতি হয়ে যায়।',
+        'commit-notice': 'আপনার পছন্দ = প্রতিশ্রুতি। গ্রাহক প্রস্তুতির গ্যারান্টি দেন, আপনি শুধু এই জানালার মধ্যে পৌঁছানোর গ্যারান্টি দেন। আপনার পাবলিক রেটিংয়ে দেখায়।',
+        'slot-now': 'এখনই (এক ঘন্টার মধ্যে)',
+        'slot-afternoon': 'বিকেল (১–৩)',
+        'slot-evening': 'সন্ধ্যা (৬–৯)',
+        'slot-tomorrow': 'আগামীকাল',
+        'loc-title': 'অবস্থান ও ঠিকানা',
+        'open-map': 'মানচিত্রে খুলুন',
+        'entrance-photo': 'প্রবেশপথের ছবি',
+        'notes': 'নোট: গার্ডকে কল করুন',
+        'actions-title': 'ডেলিভারি অ্যাকশন',
+        'request-code': 'গ্রাহকের কাছ থেকে ডেলিভারি কোড চান',
+        'on-way': 'পথে আছি',
+        'proof': 'ডেলিভারি নিশ্চিত করুন',
+        'powered': 'onslot এর মাধ্যমে — অতিরিক্ত কল ছাড়া সমন্বয়',
+        'success-title': 'হয়ে গেছে! স্লট লক',
+        'success-msg': 'আহমেদ শুধু এই জানালায় প্রস্তুত থাকবেন।',
+        'code-sent': 'কোড অনুরোধ পাঠানো হয়েছে',
+        'code-sent-msg': 'গ্রাহক শীঘ্রই কোড পাঠাবেন',
+        'on-way-sent': 'সতর্কতা পাঠানো হয়েছে',
+        'on-way-msg': 'আহমেদ প্রস্তুত হচ্ছেন',
+        'proof-title': 'ডেলিভারির প্রমাণ',
+        'proof-sub': 'দুটি ধাপ উভয় পক্ষকে ভবিষ্যতের যেকোনো বিরোধ থেকে রক্ষা করে।',
+        'proof-step1': 'প্রমাণের ছবি',
+        'proof-step1-sub': 'দরজায় প্যাকেজ বা গ্রহীতার সাথে ছবি',
+        'take-photo': 'ছবি তুলুন',
+        'photo-attached': 'ছবি সংযুক্ত',
+        'proof-step2': 'গ্রাহকের নিশ্চিতকরণ',
+        'proof-step2-sub': 'গ্রাহক তাদের অ্যাপে "গৃহীত" চাপতে বিজ্ঞপ্তি পান',
+        'send-confirm': 'নিশ্চিতকরণ অনুরোধ পাঠান',
+        'confirm-sent': 'গ্রাহক প্রাপ্তি নিশ্চিত করেছেন',
+        'finish-delivery': 'ডেলিভারি শেষ ✓',
+        'cancel': 'বাতিল',
+        'done-title': 'ডেলিভারি হয়েছে',
+        'done-msg': 'লগ হয়েছে। আপনার প্রতিশ্রুতির জন্য ধন্যবাদ 🙏'
+      },
+      hi: {
+        'delivery-label': '📦 डिलीवरी',
+        'customer-name': 'अहमद अलअब्दुल्लाह',
+        'customer-meta': 'अरामेक्स • अल मल्का, रियाद',
+        'courier-badge': '⭐ ४.८ · समय के पाबंद',
+        'window-title': 'अपनी समय विंडो चुनें',
+        'window-sub': 'जो आपके रूट के अनुकूल हो। यह आपसी प्रतिबद्धता बन जाती है।',
+        'commit-notice': 'आपका चुनाव = प्रतिबद्धता। ग्राहक तैयारी की गारंटी देता है, आप केवल इस विंडो में पहुंचने की गारंटी देते हैं। आपकी पब्लिक रेटिंग में दिखाई देता है।',
+        'slot-now': 'अभी (एक घंटे में)',
+        'slot-afternoon': 'दोपहर (१–३)',
+        'slot-evening': 'शाम (६–९)',
+        'slot-tomorrow': 'कल',
+        'loc-title': 'स्थान और पता',
+        'open-map': 'मैप्स में खोलें',
+        'entrance-photo': 'प्रवेश की तस्वीर',
+        'notes': 'नोट: गार्ड को फोन करें',
+        'actions-title': 'डिलीवरी क्रियाएं',
+        'request-code': 'ग्राहक से डिलीवरी कोड मांगें',
+        'on-way': 'रास्ते में',
+        'proof': 'डिलीवरी की पुष्टि',
+        'powered': 'onslot के माध्यम से — अतिरिक्त कॉल के बिना समन्वय',
+        'success-title': 'हो गया! स्लॉट पक्का',
+        'success-msg': 'अहमद केवल इस विंडो में तैयार होंगे।',
+        'code-sent': 'कोड अनुरोध भेजा गया',
+        'code-sent-msg': 'ग्राहक जल्द ही कोड भेजेंगे',
+        'on-way-sent': 'अलर्ट भेजा गया',
+        'on-way-msg': 'अहमद तैयार हो रहे हैं',
+        'proof-title': 'डिलीवरी का प्रमाण',
+        'proof-sub': 'दो कदम दोनों को भविष्य के विवाद से बचाते हैं।',
+        'proof-step1': 'प्रमाण फोटो',
+        'proof-step1-sub': 'दरवाजे पर पैकेज या प्राप्तकर्ता के साथ फोटो',
+        'take-photo': 'फोटो लें',
+        'photo-attached': 'फोटो अटैच किया गया',
+        'proof-step2': 'ग्राहक पुष्टि',
+        'proof-step2-sub': 'हम ग्राहक को सूचित करते हैं कि वे अपने ऐप में "प्राप्त" दबाएं',
+        'send-confirm': 'पुष्टि अनुरोध भेजें',
+        'confirm-sent': 'ग्राहक ने प्राप्ति की पुष्टि की',
+        'finish-delivery': 'डिलीवरी पूर्ण ✓',
+        'cancel': 'रद्द करें',
+        'done-title': 'डिलीवर हो गया',
+        'done-msg': 'दर्ज। आपकी प्रतिबद्धता के लिए धन्यवाद 🙏'
+      }
+    };
+
+    const LANG_META = {
+      ar: { flag: '🇸🇦', name: 'العربية', dir: 'rtl' },
+      en: { flag: '🇬🇧', name: 'English',  dir: 'ltr' },
+      ur: { flag: '🇵🇰', name: 'اردو',      dir: 'rtl' },
+      bn: { flag: '🇧🇩', name: 'বাংলা',     dir: 'ltr' },
+      hi: { flag: '🇮🇳', name: 'हिन्दी',    dir: 'ltr' }
+    };
+
+    let currentLang = 'ar';
+    let photoAttached = false;
+    let customerConfirmed = false;
+
+    function applyLang(lang) {
+      currentLang = lang;
+      const meta = LANG_META[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir = meta.dir;
+      document.getElementById('cur-flag').textContent = meta.flag;
+      document.getElementById('cur-name').textContent = meta.name;
+
+      document.querySelectorAll('[data-t]').forEach(el => {
+        const key = el.getAttribute('data-t');
+        if (T[lang] && T[lang][key]) el.textContent = T[lang][key];
+      });
+
+      document.querySelectorAll('.lang-option').forEach(o => {
+        o.classList.toggle('active', o.dataset.lang === lang);
+      });
+
+      try { localStorage.setItem('onslot-lang', lang); } catch(e) {}
+    }
+
+    function setLang(lang) {
+      applyLang(lang);
+      document.getElementById('lang-menu').classList.remove('open');
+    }
+
+    function toggleLangMenu(e) {
+      e.stopPropagation();
+      document.getElementById('lang-menu').classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.lang-menu') && !e.target.closest('.lang-switch')) {
+        document.getElementById('lang-menu').classList.remove('open');
+      }
+    });
+
+    // Initial lang
+    try {
+      const saved = localStorage.getItem('onslot-lang');
+      if (saved && LANG_META[saved]) applyLang(saved);
+    } catch(e) {}
+
+    // Slot selection
+    document.querySelectorAll('.slot').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const slot = btn.dataset.slot;
+        const labelEl = btn.querySelector('[data-t]');
+        const timeText = labelEl ? labelEl.textContent : slot;
+
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        const shipmentId = new URLSearchParams(location.search).get('id') || 'demo';
+        fetch('/api/select-slot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slot, shipmentId })
+        }).catch(() => {});
+
+        setTimeout(() => showSuccess(timeText), 300);
+      });
+    });
+
+    function t(key) {
+      return (T[currentLang] && T[currentLang][key]) || key;
+    }
+
+    function showSuccess(time) {
+      document.getElementById('card').innerHTML = `
+        <div class="success">
+          <div class="check">✓</div>
+          <h2>${t('success-title')}</h2>
+          <div class="time-box">${time}</div>
+          <p>${t('success-msg')}</p>
+          <p style="margin-top: 14px; font-size: 12px; opacity: 0.7;">onslot</p>
+        </div>
+      `;
+    }
+
+    function requestCode() {
+      document.getElementById('card').innerHTML = `
+        <div class="success">
+          <div class="check">🔐</div>
+          <h2>${t('code-sent')}</h2>
+          <p>${t('code-sent-msg')}</p>
+          <p style="margin-top: 14px; font-size: 12px; opacity: 0.7;">onslot</p>
+        </div>
+      `;
+    }
+
+    function onWay() {
+      document.getElementById('card').innerHTML = `
+        <div class="success">
+          <div class="check">🚗</div>
+          <h2>${t('on-way-sent')}</h2>
+          <p>${t('on-way-msg')}</p>
+          <p style="margin-top: 14px; font-size: 12px; opacity: 0.7;">onslot</p>
+        </div>
+      `;
+    }
+
+    function openProof() {
+      document.getElementById('proof-modal').classList.add('open');
+    }
+    function closeProof() {
+      document.getElementById('proof-modal').classList.remove('open');
+    }
+
+    function attachPhoto() {
+      photoAttached = true;
+      const step = document.getElementById('step-1');
+      step.classList.add('done');
+      const btn = step.querySelector('button');
+      btn.innerHTML = `<span>✓</span><span>${t('photo-attached')}</span>`;
+      btn.disabled = true;
+      btn.style.opacity = 0.7;
+      document.getElementById('btn-confirm').disabled = false;
+    }
+
+    function sendConfirm() {
+      customerConfirmed = true;
+      const step = document.getElementById('step-2');
+      step.classList.add('done');
+      const btn = document.getElementById('btn-confirm');
+      btn.innerHTML = `<span>✓</span><span>${t('confirm-sent')}</span>`;
+      btn.disabled = true;
+      btn.style.opacity = 0.7;
+      document.getElementById('btn-finish').disabled = false;
+    }
+
+    function finishDelivery() {
+      closeProof();
+      document.getElementById('card').innerHTML = `
+        <div class="success">
+          <div class="check">✓</div>
+          <h2>${t('done-title')}</h2>
+          <p>${t('done-msg')}</p>
+          <p style="margin-top: 14px; font-size: 12px; opacity: 0.7;">onslot</p>
+        </div>
+      `;
+    }
+
+    function showPhoto(e) {
+      e.preventDefault();
+      alert('🏠');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A7D5C" />
+  <title>محمد أبو فيصل — onslot</title>
+  <meta name="description" content="مندوب توصيل موثّق على onslot — ٤.٨ ⭐ من ١٢٨٤ توصيلة." />
+  <meta property="og:title" content="محمد أبو فيصل — مندوب موثّق على onslot" />
+  <meta property="og:description" content="⭐ 4.8 · ٩٦٪ التزام · ١٢٨٤ توصيلة" />
+  <meta property="og:type" content="profile" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A7D5C'/%3E%3Crect x='6' y='13' width='20' height='6' rx='3' fill='white'/%3E%3C/svg%3E" />
+  <link href="https://fonts.googleapis.com/css2?family=Beiruti:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #0A7D5C;
+      --primary-soft: #F0FDF4;
+      --primary-dark: #085d44;
+      --accent: #F5A524;
+      --ink: #0F172A;
+      --muted: #64748B;
+      --surface: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Beiruti', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 16px;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.55;
+    }
+
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .logo-dot {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      background: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-dot::after {
+      content: '';
+      width: 13px; height: 5px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    /* Hero card */
+    .hero {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(15,23,42,0.06);
+      background: linear-gradient(180deg, #EFFBF5 0%, #FFFFFF 60%);
+    }
+
+    .avatar {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .name {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .company {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rating-big {
+      margin-top: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .rating-big .star {
+      color: var(--accent);
+      font-size: 36px;
+    }
+
+    .rating-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Stats grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 10px;
+      text-align: center;
+    }
+    .stat .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .stat .label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Section */
+    .section {
+      margin-top: 28px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+
+    /* Badges */
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    /* Reviews */
+    .review {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+    .review-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .review-stars { color: var(--accent); font-size: 14px; }
+    .review-date { font-size: 12px; color: var(--muted); }
+    .review-text {
+      font-size: 14px;
+      color: var(--ink);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .review-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .review-tag {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Share */
+    .share-card {
+      background: var(--card);
+      border: 1.5px solid var(--primary);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .share-btn {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <span>onslot</span>
+      <span style="margin-right: auto; font-size: 12px;">بروفايل عام</span>
+    </div>
+
+    <section class="hero">
+      <div class="avatar">م</div>
+      <div class="name">محمد أبو فيصل</div>
+      <div class="company">مندوب مستقل · الرياض</div>
+      <span class="verified">✓ مندوب موثّق</span>
+
+      <div class="rating-big">
+        <span class="star">★</span>
+        <span>4.8</span>
+      </div>
+      <div class="rating-sub">من ١,٢٨٤ توصيلة مكتملة</div>
+    </section>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="value">96%</div>
+        <div class="label">التزام بالمواعيد</div>
+      </div>
+      <div class="stat">
+        <div class="value">1,284</div>
+        <div class="label">توصيلة</div>
+      </div>
+      <div class="stat">
+        <div class="value">3</div>
+        <div class="label">لغات</div>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-title">🏆 الشارات</div>
+      <div class="badges">
+        <span class="badge">⭐ تقييم ممتاز</span>
+        <span class="badge">⏱️ ملتزم بالمواعيد</span>
+        <span class="badge">🏆 ٥٠٠+ توصيل</span>
+        <span class="badge">🌍 يتحدث ٣ لغات</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">💬 آخر تقييمات العملاء</div>
+
+      <div class="review">
+        <div class="review-header">
+          <span class="review-stars">★★★★★</span>
+          <span class="review-date">قبل يومين</span>
+        </div>
+        <div class="review-text">التزم بالموعد بالضبط وكان مؤدب جداً. توصيلة ممتازة.</div>
+        <div class="review-tags">
+          <span class="review-tag">⚡ سريع</span>
+          <span class="review-tag">🙏 مؤدّب</span>
+          <span class="review-tag">🎯 ملتزم بالموعد</span>
+        </div>
+      </div>
+
+      <div class="review">
+        <div class="review-header">
+          <span class="review-stars">★★★★★</span>
+          <span class="review-date">قبل ٤ أيام</span>
+        </div>
+        <div class="review-text">تواصله واضح ومفهوم. سلّم الطرد بحرص.</div>
+        <div class="review-tags">
+          <span class="review-tag">🗣️ تواصله واضح</span>
+          <span class="review-tag">📦 حريص على الشحنة</span>
+        </div>
+      </div>
+
+      <div class="review">
+        <div class="review-header">
+          <span class="review-stars">★★★★</span>
+          <span class="review-date">قبل أسبوع</span>
+        </div>
+        <div class="review-text">جيد ومتعاون، تأخّر ربع ساعة لكن أبلغني مسبقاً.</div>
+        <div class="review-tags">
+          <span class="review-tag">🤝 متعاون</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="share-card">
+      <div style="font-weight:600;">مندوب مستقل تقدر تطلبه مباشرة</div>
+      <div style="color:var(--muted); font-size:13px; margin-top:4px;">شارك بروفايله أو اطلبه لتوصيلتك القادمة</div>
+      <button class="share-btn" onclick="shareProfile()">
+        <span>📤</span><span>شارك البروفايل</span>
+      </button>
+    </section>
+
+    <div class="footer">
+      بروفايل موثّق على <a href="https://onslot.sa">onslot.sa</a> — سجل توصيلات حقيقي، تقييمات حقيقية.
+    </div>
+  </div>
+
+  <script>
+    function shareProfile() {
+      const url = location.href;
+      const title = 'محمد أبو فيصل — مندوب موثّق على onslot';
+      if (navigator.share) {
+        navigator.share({ title, url, text: '⭐ 4.8 · ٩٦٪ التزام · ١٢٨٤ توصيلة' }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(url);
+        alert('نُسخ الرابط');
+      }
+    }
+  </script>
+</body>
+</html>
