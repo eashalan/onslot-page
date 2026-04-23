@@ -958,6 +958,35 @@
       return false;
     }
 
+    /// قاموس ترجمة أسماء جهات الاتصال الشائعة.
+    /// أي تسمية عربية معروفة تُترجم آلياً للغة الحالية.
+    /// التسميات المخصصة (نص حر من المستخدم) تظل كما هي.
+    const CONTACT_LABEL_DICT = {
+      'الحارس':   { en: 'Guard',         ur: 'گارڈ',         bn: 'গার্ড',       hi: 'गार्ड' },
+      'الوالد':   { en: 'Father',        ur: 'والد',         bn: 'বাবা',        hi: 'पिता' },
+      'الأم':     { en: 'Mother',        ur: 'والدہ',        bn: 'মা',         hi: 'माँ' },
+      'الوالدة':  { en: 'Mother',        ur: 'والدہ',        bn: 'মা',         hi: 'माँ' },
+      'الأخ':     { en: 'Brother',       ur: 'بھائی',        bn: 'ভাই',        hi: 'भाई' },
+      'الأخت':    { en: 'Sister',        ur: 'بہن',          bn: 'বোন',        hi: 'बहन' },
+      'الزوج':    { en: 'Husband',       ur: 'شوہر',         bn: 'স্বামী',       hi: 'पति' },
+      'الزوجة':   { en: 'Wife',          ur: 'بیوی',         bn: 'স্ত্রী',        hi: 'पत्नी' },
+      'السائق':   { en: 'Driver',        ur: 'ڈرائیور',      bn: 'ড্রাইভার',    hi: 'ड्राइवर' },
+      'المكتب':   { en: 'Office',        ur: 'دفتر',         bn: 'অফিস',       hi: 'कार्यालय' },
+      'الجار':    { en: 'Neighbor',      ur: 'پڑوسی',        bn: 'প্রতিবেশী',   hi: 'पड़ोसी' },
+      'الإستقبال':{ en: 'Reception',     ur: 'استقبالیہ',    bn: 'রিসেপশন',     hi: 'रिसेप्शन' },
+      'الاستقبال':{ en: 'Reception',     ur: 'استقبالیہ',    bn: 'রিসেপশন',     hi: 'रिसेप्शन' },
+      'البواب':   { en: 'Doorman',       ur: 'دربان',        bn: 'দারোয়ান',     hi: 'दरबान' },
+      'العمل':    { en: 'Work',          ur: 'کام',          bn: 'কর্মস্থল',     hi: 'कार्यस्थल' }
+    };
+
+    function translateContactLabel(label, lang) {
+      if (!label) return '';
+      if (lang === 'ar') return label;
+      const dict = CONTACT_LABEL_DICT[label.trim()];
+      if (dict && dict[lang]) return dict[lang];
+      return label;   // نص حر — اعرضه كما هو
+    }
+
     /// يُحوّل رقماً سعودياً لصيغة دولية بدون "+"  (متوافق مع wa.me)
     function normalizeSaudiPhone(raw) {
       let p = String(raw || '').replace(/\D/g, '');
@@ -996,11 +1025,12 @@
       list.forEach(c => {
         const tel = String(c.phone || '').replace(/\D/g, '');
         const wa  = normalizeSaudiPhone(c.phone);
+        const labelTranslated = translateContactLabel(c.label, currentLang);
         html += `
           <div style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
             <span style="font-size:22px;">${c.emoji || '👤'}</span>
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:600;font-size:14px;color:var(--ink);">${c.label}</div>
+              <div style="font-weight:600;font-size:14px;color:var(--ink);">${labelTranslated}</div>
               <div style="font-size:13px;color:var(--muted);direction:ltr;text-align:start;">${c.phone}</div>
             </div>
             <a href="tel:${tel}" aria-label="call"
@@ -1262,6 +1292,8 @@
       if (CARD) applyCardToDOM();
       // إعادة بناء النوافذ بنصوص اللغة الجديدة
       renderSlots();
+      // إعادة تركيب قسم جهات الاتصال البديلة بترجمة جديدة
+      if (CARD && Array.isArray(CARD.altContacts)) renderAltContacts(CARD.altContacts);
     }
 
     function setLang(lang) {
