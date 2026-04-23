@@ -1027,11 +1027,28 @@
         badge.textContent = '🏷️ ' + CARD.code;
         badge.dataset.userData = '1';
       }
-      // الخريطة
+      // الخريطة — أولوية:
+      //   ١. lat/lng حقيقية (من تثبيت موقع العميل) → نقطة دقيقة
+      //   ٢. عنوان نصي (شارع + حي + مدينة) → بحث قوقل النصي
+      //   ٣. الكود القصير وحده → بحث بالكود (تقريبي جداً، آخر ملاذ)
       if (CARD.lat && CARD.lng) {
-        MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
-      } else if (CARD.code) {
-        MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
+        MAP_URL = `https://www.google.com/maps/search/?api=1&query=${CARD.lat},${CARD.lng}`;
+      } else {
+        const addrParts = [];
+        if (CARD.streetAr) addrParts.push(CARD.streetAr);
+        else if (CARD.streetEn) addrParts.push(CARD.streetEn);
+        if (CARD.building) addrParts.push(CARD.building);
+        if (CARD.districtAr) addrParts.push(CARD.districtAr);
+        else if (CARD.districtEn) addrParts.push(CARD.districtEn);
+        if (CARD.cityAr) addrParts.push(CARD.cityAr);
+        else if (CARD.cityEn) addrParts.push(CARD.cityEn);
+
+        if (addrParts.length >= 2) {
+          const q = addrParts.join('، ') + '، السعودية';
+          MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+        } else if (CARD.code) {
+          MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
+        }
       }
       if (MAP_URL) {
         const mapLink = document.querySelector('a[href*="maps"]');
