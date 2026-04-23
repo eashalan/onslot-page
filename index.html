@@ -905,6 +905,32 @@
         notesEl.textContent = '📝 ' + CARD.notes;
         notesEl.dataset.userData = '1';
       }
+      // صورة المدخل — استبدل ملاحظة "صورة المدخل" بصورة فعلية إن وُجد URL
+      if (CARD.entrancePhoto) {
+        const photoLink = document.querySelector('a[href="#photo"]');
+        if (photoLink) {
+          photoLink.setAttribute('href', CARD.entrancePhoto);
+          photoLink.setAttribute('target', '_blank');
+          photoLink.removeAttribute('onclick');
+        }
+        // أضف معاينة inline بعد قسم الموقع
+        if (!document.getElementById('inline-entrance-photo')) {
+          const wrap = document.createElement('div');
+          wrap.id = 'inline-entrance-photo';
+          wrap.style.cssText = 'padding:0 24px 16px;';
+          wrap.innerHTML = `
+            <a href="${CARD.entrancePhoto}" target="_blank" style="display:block;">
+              <img src="${CARD.entrancePhoto}"
+                   style="width:100%; height:auto; border-radius:14px; border:1px solid var(--border); display:block;"
+                   alt="entrance" />
+            </a>
+          `;
+          const linksContainer = document.querySelector('.links');
+          if (linksContainer && linksContainer.parentNode) {
+            linksContainer.parentNode.insertBefore(wrap, linksContainer.nextSibling);
+          }
+        }
+      }
     }
 
     // عند فتح الصفحة: استبدل بيانات العينة بقيم URL إن وجدت
