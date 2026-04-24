@@ -517,10 +517,6 @@
         <span class="left"><span>🗺️</span><span data-t="open-map">افتح في الخرائط</span></span>
         <span class="chev">›</span>
       </a>
-      <a class="link" href="#photo" onclick="showPhoto(event)">
-        <span class="left"><span>📸</span><span data-t="entrance-photo">صورة المدخل</span></span>
-        <span class="chev">›</span>
-      </a>
       <div class="link" style="cursor:default;">
         <span class="left"><span>📝</span><span data-t="notes">ملاحظات: اتصل بالحارس</span></span>
       </div>
@@ -855,29 +851,32 @@
       return '🌙';
     }
 
-    /// يولّد قائمة النوافذ المناسبة من الآن
-    /// قاعدة: نافذة "الحين" + نافذتان بحجم ساعتين بعدها + بكرة
-    /// لو كنا متأخرين (>= ٢٢)، نعرض ٤ نوافذ من بكرة
+    /// ساعات التوصيل العملية في السوق السعودي: ٨ صباحاً – ١٢ منتصف الليل
+    const DELIVERY_START = 8;
+    const DELIVERY_END = 24;
+
+    /// يولّد قائمة النوافذ المناسبة من الآن ضمن ساعات العمل
     function generateSlots(now) {
       const h = now.getHours();
       const list = [];
 
-      // متأخر جداً → اعرض كل خيارات بكرة
-      if (h >= 21) {
+      // خارج ساعات العمل (١٢م – ٨ص) → كل الخيارات بكرة
+      if (h >= DELIVERY_END - 1 || h < DELIVERY_START) {
         list.push({ key: 'tom-morning',   startH: 9,  endH: 11, icon: '🌅', isTomorrow: true });
-        list.push({ key: 'tom-noon',      startH: 13, endH: 15, icon: '🕐', isTomorrow: true });
-        list.push({ key: 'tom-afternoon', startH: 16, endH: 18, icon: '🌤', isTomorrow: true });
-        list.push({ key: 'tom-evening',   startH: 19, endH: 21, icon: '🌆', isTomorrow: true });
+        list.push({ key: 'tom-noon',      startH: 12, endH: 14, icon: '🕐', isTomorrow: true });
+        list.push({ key: 'tom-afternoon', startH: 15, endH: 17, icon: '🌤', isTomorrow: true });
+        list.push({ key: 'tom-evening',   startH: 18, endH: 20, icon: '🌆', isTomorrow: true });
+        list.push({ key: 'tom-night',     startH: 20, endH: 22, icon: '🌙', isTomorrow: true });
         return list;
       }
 
       // ١. الحين (الساعة الحالية → +١)
-      const endNow = Math.min(h + 1, 22);
+      const endNow = Math.min(h + 1, DELIVERY_END);
       list.push({ key: 'now', startH: h, endH: endNow, icon: '⚡', isNow: true });
 
-      // ٢. نافذتان بحجم ساعتين بعد "الحين"
+      // ٢. نوافذ بحجم ساعتين بعد "الحين" حتى ١٢ منتصف الليل
       let cursor = endNow;
-      while (list.length < 3 && cursor + 2 <= 22) {
+      while (list.length < 4 && cursor + 2 <= DELIVERY_END) {
         list.push({
           key: `h${cursor}`,
           startH: cursor,
@@ -1079,18 +1078,152 @@
       }
     }
 
+    let SELECTED_SLOT = null;
+
     function onSlotPicked(slot, btn) {
       document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
       btn.classList.add('selected');
+      SELECTED_SLOT = { ...slot, label: btn.dataset.label };
+
+      // اعرض قسم "إضافة تفاصيل + إرسال التأكيد"
+      renderSubmitForm();
+      // انتقل بصرياً إلى قسم النموذج
+      setTimeout(() => {
+        document.getElementById('submit-section')?.scrollIntoView({
+          behavior: 'smooth', block: 'start'
+        });
+      }, 150);
+    }
+
+    /// تركيب نموذج الإرسال بعد اختيار نافذة (خانات اختيارية + رقم شحنة + زر تأكيد)
+    function renderSubmitForm() {
+      // احذف أي نموذج سابق
+      const prev = document.getElementById('submit-section');
+      if (prev) prev.remove();
+
+      const L = ({
+        ar: {
+          title: '✅ قبل التأكيد — حدّد ما تحتاجه:',
+          needCode: 'أحتاج رمز استلام من العميل',
+          codSwitch: 'فيه مبلغ مستحق عند التسليم',
+          confirmSwitch: 'أحتاج تأكيد استلام من العميل',
+          tracking: 'رقم الشحنة (من ملصق الطرد):',
+          trackingPh: 'مثل: DC378245126667',
+          submit: 'تأكيد الموعد وإرسال الإشعار',
+          sent: '📨 تم إرسال التأكيد',
+          sentSub: 'العميل يستلم إشعاراً الآن بوقتك المختار وما طلبته.'
+        },
+        en: {
+          title: '✅ Before confirming — pick what you need:',
+          needCode: 'I need a delivery code from the customer',
+          codSwitch: 'There is an amount due on delivery',
+          confirmSwitch: 'I need receipt confirmation from the customer',
+          tracking: 'Shipment number (from the parcel label):',
+          trackingPh: 'e.g. DC378245126667',
+          submit: 'Confirm slot & notify customer',
+          sent: '📨 Confirmation sent',
+          sentSub: "Customer is being notified now with your chosen time and requests."
+        },
+        ur: {
+          title: '✅ تصدیق سے پہلے — اپنی ضرورت منتخب کریں:',
+          needCode: 'مجھے گاہک سے ڈیلیوری کوڈ چاہیے',
+          codSwitch: 'ڈیلیوری پر رقم واجب ہے',
+          confirmSwitch: 'گاہک سے وصولی کی تصدیق چاہیے',
+          tracking: 'شپمنٹ نمبر (پیکج لیبل سے):',
+          trackingPh: 'مثلاً: DC378245126667',
+          submit: 'وقت کی تصدیق کریں اور مطلع کریں',
+          sent: '📨 تصدیق بھیج دی',
+          sentSub: 'گاہک کو آپ کے منتخب وقت اور ضروریات کے ساتھ مطلع کیا جا رہا ہے۔'
+        },
+        bn: {
+          title: '✅ নিশ্চিত করার আগে — আপনার প্রয়োজন নির্বাচন করুন:',
+          needCode: 'গ্রাহকের থেকে ডেলিভারি কোড দরকার',
+          codSwitch: 'ডেলিভারিতে টাকা বাকি আছে',
+          confirmSwitch: 'গ্রাহকের কাছ থেকে প্রাপ্তি নিশ্চিতকরণ দরকার',
+          tracking: 'শিপমেন্ট নম্বর (প্যাকেজ লেবেল থেকে):',
+          trackingPh: 'যেমন: DC378245126667',
+          submit: 'সময় নিশ্চিত ও বিজ্ঞপ্তি পাঠান',
+          sent: '📨 নিশ্চিতকরণ পাঠানো হয়েছে',
+          sentSub: 'গ্রাহক এখন আপনার নির্বাচিত সময় ও অনুরোধ সহ বিজ্ঞপ্তি পাচ্ছেন।'
+        },
+        hi: {
+          title: '✅ पुष्टि से पहले — अपनी ज़रूरत चुनें:',
+          needCode: 'मुझे ग्राहक से डिलीवरी कोड चाहिए',
+          codSwitch: 'डिलीवरी पर रकम बकाया है',
+          confirmSwitch: 'ग्राहक से प्राप्ति की पुष्टि चाहिए',
+          tracking: 'शिपमेंट नंबर (पैकेज लेबल से):',
+          trackingPh: 'जैसे: DC378245126667',
+          submit: 'समय पक्का करें और सूचित करें',
+          sent: '📨 पुष्टि भेजी गई',
+          sentSub: 'ग्राहक को आपके चुने हुए समय और अनुरोधों के साथ सूचित किया जा रहा है।'
+        }
+      })[currentLang] || {};
+
+      const section = document.createElement('div');
+      section.id = 'submit-section';
+      section.style.cssText = 'padding: 16px 24px 24px; border-top: 1px solid var(--border); margin-top: 8px;';
+      section.innerHTML = `
+        <div style="font-weight:600;font-size:15px;margin-bottom:14px;">${L.title}</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" id="opt-code" style="width:20px;height:20px;accent-color:var(--primary);" />
+          <span style="font-size:14px;">🔐 ${L.needCode}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" id="opt-cod" style="width:20px;height:20px;accent-color:var(--primary);" />
+          <span style="font-size:14px;">💵 ${L.codSwitch}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;margin-bottom:16px;cursor:pointer;">
+          <input type="checkbox" id="opt-confirm" style="width:20px;height:20px;accent-color:var(--primary);" />
+          <span style="font-size:14px;">✅ ${L.confirmSwitch}</span>
+        </label>
+        <div style="font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;">${L.tracking}</div>
+        <input type="text" id="tracking-number" placeholder="${L.trackingPh}"
+               inputmode="latin" dir="ltr"
+               style="width:100%;padding:14px;border:1px solid var(--border);border-radius:12px;font-size:16px;font-family:inherit;text-transform:uppercase;" />
+        <button class="btn btn-primary btn-full" style="margin-top:16px;padding:16px;font-size:16px;" onclick="submitCourierPick()">
+          ${L.submit}
+        </button>
+      `;
+      const slotsContainer = document.getElementById('slots-container');
+      slotsContainer?.parentNode?.insertBefore(section, slotsContainer.nextSibling);
+    }
+
+    function submitCourierPick() {
+      const needCode = document.getElementById('opt-code')?.checked || false;
+      const cod = document.getElementById('opt-cod')?.checked || false;
+      const needConfirm = document.getElementById('opt-confirm')?.checked || false;
+      const tracking = document.getElementById('tracking-number')?.value.trim() || '';
 
       const shipmentId = new URLSearchParams(location.search).get('id') || 'demo';
-      fetch('/api/select-slot', {
+      fetch('/api/courier-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slot: slot.key, startH: slot.startH, endH: slot.endH, shipmentId })
+        body: JSON.stringify({
+          shipmentId,
+          slot: SELECTED_SLOT?.key,
+          startH: SELECTED_SLOT?.startH,
+          endH: SELECTED_SLOT?.endH,
+          needCode, cod, needConfirm, tracking
+        })
       }).catch(() => {});
 
-      setTimeout(() => showSuccess(btn.dataset.label), 300);
+      const L = ({
+        ar: { sent: 'تم الإرسال للعميل', sub: 'وصل إشعار بكل التفاصيل.' },
+        en: { sent: 'Sent to customer', sub: 'Customer notified with all details.' },
+        ur: { sent: 'گاہک کو بھیج دیا', sub: 'گاہک کو تمام تفصیلات کے ساتھ مطلع کر دیا۔' },
+        bn: { sent: 'গ্রাহককে পাঠানো হয়েছে', sub: 'গ্রাহককে সমস্ত বিবরণ সহ জানানো হয়েছে।' },
+        hi: { sent: 'ग्राहक को भेजा गया', sub: 'ग्राहक को सभी विवरण के साथ सूचित किया गया।' }
+      })[currentLang] || { sent: 'Sent', sub: '' };
+
+      document.getElementById('card').innerHTML = `
+        <div class="success">
+          <div class="check">✓</div>
+          <h2>${L.sent}</h2>
+          <div class="time-box">${SELECTED_SLOT?.label || ''}</div>
+          <p>${L.sub}</p>
+          <p style="margin-top: 14px; font-size: 12px; opacity: 0.7;">onslot</p>
+        </div>
+      `;
     }
 
     // ===== URL params =====
