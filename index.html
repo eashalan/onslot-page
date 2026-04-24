@@ -1148,37 +1148,13 @@
         badge.textContent = '🏷️ ' + CARD.code;
         badge.dataset.userData = '1';
       }
-      // الخريطة — أولوية:
-      //   ١. lat/lng حقيقية (من تثبيت موقع العميل) → نقطة دقيقة عبر geo:
-      //   ٢. عنوان نصي بالإنجليزية (Google يفهمه أفضل من العربي)
-      //   ٣. عنوان عربي
-      //   ٤. الكود القصير (آخر ملاذ)
-      if (CARD.lat && CARD.lng) {
-        // صيغة مباشرة لـGoogle Maps — أكثر موثوقية من /maps/search?api=1
+      // الخريطة — Google Maps يفهم العنوان الوطني السعودي مباشرة منذ ٢٠٢٠.
+      // الكود القصير وحده (٤ حروف + ٤ أرقام) يعطي نقطة دقيقة على بيت العميل.
+      if (CARD.code) {
+        MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code)}`;
+      } else if (CARD.lat && CARD.lng) {
+        // احتياطي فقط لو ما في كود قصير
         MAP_URL = `https://maps.google.com/?q=${CARD.lat},${CARD.lng}`;
-      } else {
-        // فضّل النص الإنجليزي لأن Google Geocoding أفضل معه عالمياً
-        const en = [];
-        if (CARD.building) en.push(CARD.building);
-        if (CARD.streetEn) en.push(CARD.streetEn);
-        if (CARD.districtEn) en.push(CARD.districtEn);
-        if (CARD.cityEn) en.push(CARD.cityEn);
-
-        const ar = [];
-        if (CARD.building) ar.push(CARD.building);
-        if (CARD.streetAr) ar.push(CARD.streetAr);
-        if (CARD.districtAr) ar.push(CARD.districtAr);
-        if (CARD.cityAr) ar.push(CARD.cityAr);
-
-        if (en.length >= 2) {
-          const q = en.join(', ') + ', Saudi Arabia';
-          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(q)}`;
-        } else if (ar.length >= 2) {
-          const q = ar.join('، ') + '، السعودية';
-          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(q)}`;
-        } else if (CARD.code) {
-          MAP_URL = `https://maps.google.com/?q=${encodeURIComponent(CARD.code + ', Saudi Arabia')}`;
-        }
       }
       if (MAP_URL) {
         const mapLink = document.querySelector('a[href*="maps"]');
